@@ -8,7 +8,7 @@ on:
 
 jobs:
   ci-cd-pipeline:
-    name: Build, Test, and Deploy
+    name: Build, Deploy, and Load Test
     runs-on: ubuntu-latest
     
     steps:
@@ -22,22 +22,18 @@ jobs:
           cache: "pip"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt ruff pytest httpx
+        run: pip install -r requirements.txt ruff
 
       - name: Lint Code (CI)
         run: ruff check .
 
-      - name: Run Tests (CI)
-        run: pytest tests/ -v --tb=short
-        # If there are no tests yet, don't fail the whole pipeline
-        continue-on-error: true
-
-      - name: Verify Docker Build (CI)
-        run: docker compose build
-
-      - name: Simulated Deployment (CD)
-        # Instead of deploying to a real external server (which requires SSH keys/secrets),
-        # we start the infrastructure right here on the GitHub runner to prove it works.
+      - name: Build & Start Infrastructure (CD)
         run: |
-          docker compose up -d
+          docker compose up -d --build
+          # Wait a few seconds for FastAPI and Redis to be fully ready
+          sleep 10
           docker compose ps
+
+      - name: Run k6 Performance Test (CI)
+        run: |
+          docker run --rm -i --network shayan_default -e BASE_URL=http://app:8000 grafana/k6 run - < tests/load_test.js
