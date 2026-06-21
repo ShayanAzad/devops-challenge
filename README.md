@@ -27,10 +27,10 @@ curl http://localhost:8000/
 **Dockerfile** — switched to a two-stage build with `python:3.11-slim`. The first stage installs dependencies, the second stage is a clean image that just copies them over. Drops the image from ~1 GB to ~150 MB. Added a non-root user for basic security hygiene.
 
 **CI/CD (GitHub Actions)** — We set up a single automated pipeline that runs every time you push code. It does:
-1. **Lint & Test** — checks code style and runs tests.
-2. **Build** — verifies the Docker image builds successfully.
-3. **Deploy** — starts the infrastructure directly on the GitHub runner to prove it boots up without errors. 
-This is simple, fault-tolerant, and requires zero passwords or SSH keys to be configured!
+1. **Lint** — checks code style for errors.
+2. **Build & Start Infrastructure** — builds the Docker image and completely boots up the platform (FastAPI, Redis, Monitoring) inside the GitHub runner.
+3. **Run Performance Test** — automatically runs the `k6` load test against the running infrastructure.
+This is simple, fault-tolerant (if the load test fails, the pipeline fails), and requires zero passwords or SSH keys to be configured!
 
 **Logs (Loki + Promtail)** — Promtail watches the Docker socket and ships all container logs to Loki. You can view them in Grafana next to your metrics without running a heavy ELK stack. Loki is much lighter because it only indexes labels, not the full log text.
 
