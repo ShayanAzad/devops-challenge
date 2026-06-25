@@ -18,7 +18,7 @@ const BASE = __ENV.BASE_URL || "http://localhost:8000";
 
 export default function () {
   // Write a key
-  const writeRes = http.post(`${BASE}/write/perf_key?value=hello`);
+  const writeRes = http.post(`${BASE}/write/example_key?value=hello`);
   check(writeRes, { "write 200": (r) => r.status === 200 });
 
   // Read root
