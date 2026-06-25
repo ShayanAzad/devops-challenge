@@ -7,10 +7,10 @@ on:
     branches: [main]
 
 jobs:
-  ci-cd-pipeline:
-    name: Build, Deploy, and Load Test
+  pipeline:
+    name: Lint, Deploy, and Test
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -21,26 +21,28 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install -r requirements.txt ruff
 
-      - name: Lint Code (CI)
+      - name: Lint
         run: ruff check .
 
-      - name: Build & Start Infrastructure (CD)
+      - name: Start infrastructure
         run: |
           docker compose up -d --build
-          # Wait a few seconds for FastAPI and Redis to be fully ready
-          sleep 10
+          sleep 15
           docker compose ps
 
       - name: Install k6
         run: |
-          sudo gpg -k
-          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
-          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
-          sudo apt-get update
+          sudo gpg --no-default-keyring \
+            --keyring /usr/share/keyrings/k6-archive-keyring.gpg \
+            --keyserver hkp://keyserver.ubuntu.com:80 \
+            --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" \
+            | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update -qq
           sudo apt-get install -y k6
 
-      - name: Run k6 Performance Test (CI)
+      - name: Run performance test
         run: k6 run -e BASE_URL=http://localhost:8000 tests/load_test.js
