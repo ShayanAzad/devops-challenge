@@ -36,4 +36,4 @@ jobs:
 
       - name: Run k6 Performance Test (CI)
         run: |
-          docker run --rm -i --network default_network -e BASE_URL=http://app:8000 grafana/k6 run - < tests/load_test.js
+          docker run --rm -i --network host -e BASE_URL=http://app:8000 grafana/k6 run - < tests/load_test.js
